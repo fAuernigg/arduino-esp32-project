@@ -7,9 +7,7 @@ sudo apt-get install -y git wget make libncurses-dev flex bison gperf python pyt
 
 
 if  [ ! -d "xtensa-esp32-elf" ] ; then
-	#wget "https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1.22.0-61-gab8375a-5.2.0.tar.gz"
-	#tar -xzf xtensa-esp32-elf-linux64-1.22.0-61-gab8375a-5.2.0.tar.gz
-
+	#file="xtensa-esp32-elf-linux64-1.22.0-61-gab8375a-5.2.0.tar.gz"
 	file="xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.tar.gz"
 	wget "https://dl.espressif.com/dl/$file"
 	tar -xzf "$file"
@@ -19,13 +17,17 @@ if  [ ! -d "xtensa-esp32-elf" ] ; then
 	if  [ ! -d "xtensa-esp32-elf" ] ; then echo "error xtensa-esp32-elf download untar failed" ; exit 1; fi
 fi
 
-export PATH=$PATH:$spath/esp/xtensa-esp32-elf/bin
+export PATH=$PATH:$spath/xtensa-esp32-elf/bin
 
 if [ ! -d "crosstool-NG" ] ; then
 	git clone -b xtensa-1.22.x https://github.com/espressif/crosstool-NG.git
 	if [ $? -ne 0 ] ; then echo "error git clone crosstool-NG" ; exit 1; fi
 
 	cd crosstool-NG
+
+	# fix file download problem:
+	cp expat-2.1.0.tar.gz crosstool-NG/.build/tarballs/expat-2.1.0.tar.gz
+
 	if [ $? -ne 0 ] ; then echo "error cd crosstool-NG" ; exit 1; fi
 	./bootstrap
 	if [ $? -ne 0 ] ; then echo "error ./bootstrap" ; exit 1; fi
