@@ -26,7 +26,8 @@ if [ ! -d "crosstool-NG" ] ; then
 	cd crosstool-NG
 
 	# fix file download problem:
-	cp expat-2.1.0.tar.gz crosstool-NG/.build/tarballs/expat-2.1.0.tar.gz
+	mkdir -p .build/tarballs
+	cp ../expat-2.1.0.tar.gz .build/tarballs/expat-2.1.0.tar.gz
 
 	if [ $? -ne 0 ] ; then echo "error cd crosstool-NG" ; exit 1; fi
 	./bootstrap
