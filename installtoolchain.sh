@@ -24,7 +24,7 @@ git submodule update --init
 
 cd esp-idf
 if [ $? -ne 0 ] ; then echo "error apt install" ; exit 1; fi
-git submodule update --init
+git checkout "release/v3.2"
 
 
 cd "$spath"
