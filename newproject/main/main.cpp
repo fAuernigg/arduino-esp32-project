@@ -23,13 +23,13 @@ PubSubClient mqttClient(espClient);
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 // Add your MQTT Broker IP address and port
-const char* mqtt_server = "iot.eclipse.org";
+const char* mqtt_server = "test.mosquitto.org";
 int port = 1883; //8883 for secure version
 String mqtt_id;
 
 void callback(char* topic, byte* message, unsigned int length) {
   if (String(topic) == (mqtt_id + "/somecmd")) {
-    String messageTemp;    
+    String messageTemp;
     for (int i = 0; i < length; i++) {
       Serial.print((char)message[i]);
       messageTemp += (char)message[i];
@@ -47,12 +47,14 @@ void checkMqttConnected() {
     count++;
     ESP_LOGI(TAG, "Attempting MQTT connection... %i", count);
 
-    if (mqttClient.connect(mqtt_id.c_str())) 
+    if (mqttClient.connect(mqtt_id.c_str()))
     //if (mqttClient.connect(mqtt_id.c_str(), mqtt_user, mqtt_pass, String("offline/" + mqtt_id).c_str(), 2, true, "offline",  false))
-    {    
+    {
       ESP_LOGI(TAG, "connected, subscribing to topic..");
       // Subscribe
       mqttClient.subscribe(String(mqtt_id + "/#").c_str());
+      // Note: publish messages to this device using
+      //       mosquitto sub client: mosquitto_pub -h test.mosquitto.org -p 1883 -t "[mqtt_id]" -m "helloworld"
     } else {
       ESP_LOGE(TAG, "failed to connect, mqtt state: %i, trying again", mqttClient.state());
       // Wait x seconds before retrying
@@ -81,8 +83,9 @@ void setup(void) {
 
     ESP_LOGI(TAG, "Starting version " VERSION " ...");
     setup_wifi();
-    
-    mqtt_id = String("esp32phone_") + WiFi.macAddress();
+
+    mqtt_id = String("testproject_") + WiFi.macAddress();
+    ESP_LOGI(TAG, "Setting mqtt_id: %s", mqtt_id.c_str());
 }
 
 
