@@ -5,3 +5,6 @@
 	path = esp-idf
 	url = https://github.com/espressif/esp-idf.git
 	branch = v3.2
+[submodule "newproject/components/pubsubclient"]
+	path = newproject/components/pubsubclient
+	url = https://github.com/knolleary/pubsubclient.git
