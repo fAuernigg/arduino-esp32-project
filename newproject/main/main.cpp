@@ -4,6 +4,7 @@
 #include "main.h"
 #include <WiFiMulti.h>
 #include "Arduino.h"
+#include <PubSubClient.h>
 
 #include "esp_log.h"
 #ifdef ARDUINO_ARCH_ESP32
@@ -11,7 +12,55 @@
 #endif
 
 WiFiMulti WiFiMulti;
+WiFiClient espClient;
+//WiFiClientSecure espClient;
+
 bool wifiConnected=false;
+PubSubClient mqttClient(espClient);
+
+
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+// Add your MQTT Broker IP address and port
+const char* mqtt_server = "iot.eclipse.org";
+int port = 1883; //8883 for secure version
+String mqtt_id;
+
+void callback(char* topic, byte* message, unsigned int length) {
+  if (String(topic) == (mqtt_id + "/somecmd")) {
+    String messageTemp;    
+    for (int i = 0; i < length; i++) {
+      Serial.print((char)message[i]);
+      messageTemp += (char)message[i];
+    }
+    ESP_LOGI(TAG, "somecmd received found: %s, message: %s", topic, messageTemp.c_str());
+  } else {
+    //ESP_LOGI(TAG, "unknown topic found (skipping): %s", topic);
+  }
+}
+
+void checkMqttConnected() {
+  int count=0;
+  // Loop until we're reconnected
+  while (!mqttClient.connected() && count<2) {
+    count++;
+    ESP_LOGI(TAG, "Attempting MQTT connection... %i", count);
+
+    if (mqttClient.connect(mqtt_id.c_str())) 
+    //if (mqttClient.connect(mqtt_id.c_str(), mqtt_user, mqtt_pass, String("offline/" + mqtt_id).c_str(), 2, true, "offline",  false))
+    {    
+      ESP_LOGI(TAG, "connected, subscribing to topic..");
+      // Subscribe
+      mqttClient.subscribe(String(mqtt_id + "/#").c_str());
+    } else {
+      ESP_LOGE(TAG, "failed to connect, mqtt state: %i, trying again", mqttClient.state());
+      // Wait x seconds before retrying
+      delay(2000);
+    }
+  }
+}
+////////////////////////////////////////////////////////////
 
 
 void setup_wifi() {
@@ -23,13 +72,17 @@ void setup_wifi() {
 
     WiFi.mode(WIFI_STA);
     WiFiMulti.addAP(CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
-}
 
+    mqttClient.setServer(mqtt_server, port);
+    mqttClient.setCallback(callback);
+}
 
 void setup(void) {
 
     ESP_LOGI(TAG, "Starting version " VERSION " ...");
     setup_wifi();
+    
+    mqtt_id = String("esp32phone_") + WiFi.macAddress();
 }
 
 
@@ -37,13 +90,20 @@ void setup(void) {
 void loop() {
 
     if ((WiFiMulti.run() == WL_CONNECTED)) {
+      
+      checkMqttConnected();
+
       if (!wifiConnected) {
         Serial.println("WiFi connected");
         Serial.println("IP address: ");
         Serial.println(WiFi.localIP());
         ESP_LOGI(TAG, "wifi done enabled %s", String(WiFi.localIP()).c_str());
         wifiConnected = true;
+        
+        mqttClient.publish(String(mqtt_id + "/helloworld").c_str(), "helloworldmessage");
       }
+
+      mqttClient.loop();
     } else {
       wifiConnected = false;
     }
